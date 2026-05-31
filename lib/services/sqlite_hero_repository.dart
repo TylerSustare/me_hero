@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models/hero_character.dart';
 import 'hero_repository.dart';
 
@@ -37,9 +38,13 @@ class SqliteHeroRepository implements HeroRepository {
   @override
   Future<void> saveHero(HeroCharacter hero) async {
     final db = await database;
+    final map = hero.toMap();
+    // Sandbox paths change on iOS/macOS across launches. Only store the filename.
+    map['spriteSheetPath'] = basename(hero.spriteSheetPath);
+    
     await db.insert(
       'heroes',
-      hero.toMap(),
+      map,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
@@ -49,7 +54,18 @@ class SqliteHeroRepository implements HeroRepository {
     final db = await database;
     final orderBy = 'createdAt DESC';
     final result = await db.query('heroes', orderBy: orderBy);
-    return result.map((map) => HeroCharacter.fromMap(map)).toList();
+    
+    final docsDir = await getApplicationDocumentsDirectory();
+
+    return result.map((map) {
+      final mutableMap = Map<String, dynamic>.from(map);
+      // Reconstruct the absolute path using the CURRENT documents directory.
+      // We use basename() to gracefully handle any older rows that stored the full absolute path.
+      final fileName = basename(mutableMap['spriteSheetPath'] as String);
+      mutableMap['spriteSheetPath'] = join(docsDir.path, fileName);
+      
+      return HeroCharacter.fromMap(mutableMap);
+    }).toList();
   }
 
   @override

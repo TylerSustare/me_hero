@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/hero_character.dart';
 
+enum AnimationState { idle, run, jump }
+
 class HeroDetailsScreen extends StatefulWidget {
   final HeroCharacter hero;
 
@@ -15,20 +17,48 @@ class HeroDetailsScreen extends StatefulWidget {
 class _HeroDetailsScreenState extends State<HeroDetailsScreen> {
   int _currentFrame = 0;
   Timer? _animationTimer;
-  static const int _frameCount = 2; // idle1 and idle2
   static const double _spriteSize = 64.0; 
+  AnimationState _currentState = AnimationState.idle;
+  int _frameIndex = 0;
+
+  List<int> get _activeFrames {
+    switch (_currentState) {
+      case AnimationState.idle:
+        return [0, 1];
+      case AnimationState.run:
+        return [2, 3];
+      case AnimationState.jump:
+        return [4];
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    // Start a 500ms loop to alternate between the two frames
-    _animationTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _animationTimer?.cancel();
+    int interval = _currentState == AnimationState.run ? 250 : 500;
+    _animationTimer = Timer.periodic(Duration(milliseconds: interval), (timer) {
       if (mounted) {
         setState(() {
-          _currentFrame = (_currentFrame + 1) % _frameCount;
+          _frameIndex = (_frameIndex + 1) % _activeFrames.length;
+          _currentFrame = _activeFrames[_frameIndex];
         });
       }
     });
+  }
+
+  void _setAnimationState(AnimationState state) {
+    if (_currentState == state) return;
+    setState(() {
+      _currentState = state;
+      _frameIndex = 0;
+      _currentFrame = _activeFrames.first;
+    });
+    _startTimer();
   }
 
   @override
@@ -50,9 +80,9 @@ class _HeroDetailsScreenState extends State<HeroDetailsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              "Idle Animation",
-              style: TextStyle(color: Colors.white70, fontSize: 18, letterSpacing: 2),
+            Text(
+              "${_currentState.name.toUpperCase()} ANIMATION",
+              style: const TextStyle(color: Colors.white70, fontSize: 18, letterSpacing: 2),
             ),
             const SizedBox(height: 20),
             
@@ -88,7 +118,7 @@ class _HeroDetailsScreenState extends State<HeroDetailsScreen> {
                                File(widget.hero.spriteSheetPath),
                                // CRITICAL: FilterQuality.none enforces hard pixel edges when scaling up
                                filterQuality: FilterQuality.none, 
-                               width: _spriteSize * _frameCount,
+                               width: _spriteSize * 5, // We now support up to 5 frames
                                height: _spriteSize,
                                fit: BoxFit.fill,
                              ),
@@ -99,6 +129,20 @@ class _HeroDetailsScreenState extends State<HeroDetailsScreen> {
                    ),
                 ),
               ),
+            ),
+
+            const SizedBox(height: 20),
+            
+            // State selectors
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildStateButton(AnimationState.idle, "Idle"),
+                const SizedBox(width: 10),
+                _buildStateButton(AnimationState.run, "Run"),
+                const SizedBox(width: 10),
+                _buildStateButton(AnimationState.jump, "Jump"),
+              ],
             ),
 
             const SizedBox(height: 60),
@@ -116,14 +160,26 @@ class _HeroDetailsScreenState extends State<HeroDetailsScreen> {
               child: Image.file(
                 File(widget.hero.spriteSheetPath),
                 filterQuality: FilterQuality.none,
-                width: 128 * 2, // Scale up exactly 2x
-                height: 64 * 2,
+                width: 320, // Scaled for 5 frames (64 * 5)
+                height: 64,
                 fit: BoxFit.contain,
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildStateButton(AnimationState state, String label) {
+    final isActive = _currentState == state;
+    return ElevatedButton(
+      onPressed: () => _setAnimationState(state),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isActive ? Colors.deepPurpleAccent : Colors.grey[800],
+        foregroundColor: Colors.white,
+      ),
+      child: Text(label),
     );
   }
 }

@@ -7,51 +7,58 @@ void main() async {
     await maskDir.create(recursive: true);
   }
 
-  // Draw exactly on a 64x64 native retro grid to guarantee blocky pixel aesthetics
-  final silhouetteColor = img.ColorRgba8(255, 255, 255, 180);
+  // Use a stick figure color with some opacity (transparent black)
+  final color = img.ColorRgba8(0, 0, 0, 180);
+  final int t = 16; // thickness
 
-  // --- IDLE 1 (Neutral Side Profile) ---
-  img.Image tiny1 = img.Image(width: 64, height: 64, numChannels: 4);
-  img.fill(tiny1, color: img.ColorRgba8(0, 0, 0, 0));
+  // Helper to draw limbs more cleanly
+  void drawLimb(img.Image canvas, int x1, int y1, int x2, int y2) {
+    img.drawLine(canvas, x1: x1, y1: y1, x2: x2, y2: y2, color: color, thickness: t, antialias: true);
+  }
 
-  // Head (blocky 7x7 square roughly)
-  img.fillRect(tiny1, x1: 28, y1: 10, x2: 36, y2: 18, color: silhouetteColor);
-  // Nose extending right
-  img.fillRect(tiny1, x1: 36, y1: 12, x2: 38, y2: 15, color: silhouetteColor);
+  // --- IDLE (Straight standing profile, used for both idle steps) ---
+  img.Image idle = img.Image(width: 640, height: 640, numChannels: 4);
+  img.fill(idle, color: img.ColorRgba8(0, 0, 0, 0));
+  img.fillCircle(idle, x: 320, y: 160, radius: 50, color: color, antialias: true); // Head
+  drawLimb(idle, 320, 220, 320, 560); // Torso + Legs straight down
+  drawLimb(idle, 320, 560, 360, 560); // Foot pointing forward
+  await File('assets/masks/idle_mask.png').writeAsBytes(img.encodePng(idle));
 
-  // Torso
-  img.fillRect(tiny1, x1: 27, y1: 19, x2: 34, y2: 38, color: silhouetteColor);
+  // --- RUN (Legs apart, arms swinging like uploaded image) ---
+  img.Image run1 = img.Image(width: 640, height: 640, numChannels: 4);
+  img.fill(run1, color: img.ColorRgba8(0, 0, 0, 0));
+  img.fillCircle(run1, x: 320, y: 160, radius: 50, color: color, antialias: true); // Head
+  drawLimb(run1, 320, 210, 320, 380); // Torso straight down
+  
+  drawLimb(run1, 320, 240, 240, 240); // Back Arm top (straight back horizontally)
+  drawLimb(run1, 240, 240, 220, 340); // Back Arm bottom (straight down)
+  
+  drawLimb(run1, 320, 240, 400, 300); // Front Arm top (forward and down)
+  drawLimb(run1, 400, 300, 480, 240); // Front Arm bottom (forward and up)
+  
+  drawLimb(run1, 320, 380, 260, 480); // Back Leg top (back and down)
+  drawLimb(run1, 260, 480, 140, 460); // Back Leg bottom (straight back horizontally)
+  
+  drawLimb(run1, 320, 380, 420, 440); // Front Leg top (forward and down)
+  drawLimb(run1, 420, 440, 460, 580); // Front Leg bottom (down and slightly forward)
+  await File('assets/masks/run_mask.png').writeAsBytes(img.encodePng(run1));
 
-  // Arm (straight down)
-  img.fillRect(tiny1, x1: 30, y1: 21, x2: 33, y2: 36, color: silhouetteColor);
-
-  // Legs  
-  img.fillRect(tiny1, x1: 27, y1: 38, x2: 30, y2: 56, color: silhouetteColor); // Left leg
-  img.fillRect(tiny1, x1: 32, y1: 38, x2: 35, y2: 56, color: silhouetteColor); // Right leg
-
-  // Scale up exactly 10x using Nearest Neighbor to preserve the stark blocky edges
-  img.Image scaled1 = img.copyResize(tiny1, width: 640, height: 640, interpolation: img.Interpolation.nearest);
-  await File('assets/masks/idle1_mask.png').writeAsBytes(img.encodePng(scaled1));
-
-
-  // --- IDLE 2 (Chest Puffed Side Profile) ---
-  img.Image tiny2 = img.Image(width: 64, height: 64, numChannels: 4);
-  img.fill(tiny2, color: img.ColorRgba8(0, 0, 0, 0));
-
-  // Head
-  img.fillRect(tiny2, x1: 28, y1: 10, x2: 36, y2: 18, color: silhouetteColor);
-  img.fillRect(tiny2, x1: 36, y1: 12, x2: 38, y2: 15, color: silhouetteColor);
-
-  // Torso (Puffed forward to the right)
-  img.fillRect(tiny2, x1: 26, y1: 19, x2: 36, y2: 38, color: silhouetteColor);
-
-  // Arm (pulled slightly back from the chest)
-  img.fillRect(tiny2, x1: 28, y1: 21, x2: 31, y2: 36, color: silhouetteColor);
-
-  // Legs (staggered slightly more from breathing)
-  img.fillRect(tiny2, x1: 26, y1: 38, x2: 29, y2: 56, color: silhouetteColor);
-  img.fillRect(tiny2, x1: 33, y1: 38, x2: 36, y2: 56, color: silhouetteColor);
-
-  img.Image scaled2 = img.copyResize(tiny2, width: 640, height: 640, interpolation: img.Interpolation.nearest);
-  await File('assets/masks/idle2_mask.png').writeAsBytes(img.encodePng(scaled2));
+  // --- JUMP (Matched to uploaded image) ---
+  img.Image jump = img.Image(width: 640, height: 640, numChannels: 4);
+  img.fill(jump, color: img.ColorRgba8(0, 0, 0, 0));
+  img.fillCircle(jump, x: 340, y: 160, radius: 50, color: color, antialias: true); // Head
+  drawLimb(jump, 340, 210, 300, 380); // Torso slightly angled
+  
+  drawLimb(jump, 340, 210, 260, 250); // Back Arm top (back and down)
+  drawLimb(jump, 260, 250, 230, 330); // Back Arm bottom (down and slightly back)
+  
+  drawLimb(jump, 340, 210, 390, 150); // Front Arm top (forward and up)
+  drawLimb(jump, 390, 150, 430, 90); // Front Arm bottom (forward and up)
+  
+  drawLimb(jump, 300, 380, 250, 460); // Back Leg top (back and down)
+  drawLimb(jump, 250, 460, 190, 530); // Back Leg bottom (back and down)
+  
+  drawLimb(jump, 300, 380, 420, 380); // Front Leg top (horizontal forward)
+  drawLimb(jump, 420, 380, 380, 480); // Front Leg bottom (down and slightly back)
+  await File('assets/masks/jump_mask.png').writeAsBytes(img.encodePng(jump));
 }

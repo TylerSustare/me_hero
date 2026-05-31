@@ -25,7 +25,7 @@ class _HeroCreationScreenState extends State<HeroCreationScreen> {
       final cameras = await availableCameras();
       if (!mounted) return;
       
-      // Navigate to the camera capture screen, asking for idle1 and idle2
+      // Navigate to the camera capture screen, asking for idle1, idle2, run1, run2, and jump
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -35,6 +35,9 @@ class _HeroCreationScreenState extends State<HeroCreationScreen> {
             requiredPoses: const [
               SpritePose.idle1,
               SpritePose.idle2,
+              SpritePose.run1,
+              SpritePose.run2,
+              SpritePose.jump,
             ],
           ),
         ),

@@ -98,8 +98,9 @@ class SpriteProcessor {
     required int maskHeight,
   }) {
     img.Image? decodedImage = img.decodeImage(rawBytes);
-    if (decodedImage == null)
+    if (decodedImage == null) {
       throw Exception("Failed to decode raw image segment.");
+    }
 
     img.Image subjectOnlyImage = img.copyResize(
       decodedImage,
@@ -149,21 +150,31 @@ class SpriteProcessor {
         throw Exception("Provided erased image list is empty.");
       }
 
-      List<Uint8List> processedFrames = [];
-
-      for (int i = 0; i < erasedImagePaths.length; i++) {
-        final erasedBytes = await File(erasedImagePaths[i]).readAsBytes();
-
-        final pixelatedBytes = await Isolate.run(() {
-          return isolatePixelateOnly(erasedBytes, 64, 64);
-        });
-        processedFrames.add(pixelatedBytes);
-      }
-
       debugPrint("Stitching spritesheet in isolate...");
 
-      // Stitch and encode inside isolate
-      final spriteBytes = await Isolate.run(() {
+      // Perform all file reading, pixelating, and stitching in a SINGLE isolate
+      // to avoid spawning 6+ isolates sequentially which can deadlock the engine.
+      final spriteBytes = await Isolate.run(() async {
+        List<Uint8List> processedFrames = [];
+
+        for (int i = 0; i < erasedImagePaths.length; i++) {
+          final erasedBytes = await File(erasedImagePaths[i]).readAsBytes();
+          
+          img.Image? decodedImage = img.decodeImage(erasedBytes);
+          if (decodedImage == null) {
+            throw Exception("Failed to decode erased image $i.");
+          }
+          
+          img.Image pixelatedImage = img.copyResize(
+            decodedImage,
+            width: 64,
+            height: 64,
+            interpolation: img.Interpolation.nearest,
+          );
+          
+          processedFrames.add(img.encodePng(pixelatedImage));
+        }
+
         List<img.Image> loadedFrames = processedFrames
             .map((b) => img.decodeImage(b)!)
             .toList();

@@ -7,7 +7,7 @@ import '../models/hero_character.dart';
 import '../providers.dart';
 
 enum SpritePose {
-  idle1, idle2,
+  idle1, idle2, run1, run2, jump
 }
 
 extension SpritePoseDetails on SpritePose {
@@ -15,10 +15,21 @@ extension SpritePoseDetails on SpritePose {
     switch (this) {
       case SpritePose.idle1: return "Stand relaxed, facing sideways.";
       case SpritePose.idle2: return "Same pose, chest slightly puffed out.";
+      case SpritePose.run1: return "Running pose: one leg forward, opposite arm forward.";
+      case SpritePose.run2: return "Running pose: other leg forward.";
+      case SpritePose.jump: return "Jumping pose: legs bent, arms up.";
     }
   }
 
-  String get maskAssetPath => 'assets/masks/${name}_mask.png';
+  String get maskAssetPath {
+    if (this == SpritePose.idle1 || this == SpritePose.idle2) {
+      return 'assets/masks/idle_mask.png';
+    }
+    if (this == SpritePose.run1 || this == SpritePose.run2) {
+      return 'assets/masks/run_mask.png';
+    }
+    return 'assets/masks/${name}_mask.png';
+  }
 }
 
 class SpriteCaptureScreen extends ConsumerStatefulWidget {
