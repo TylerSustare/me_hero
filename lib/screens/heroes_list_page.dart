@@ -1,21 +1,66 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers.dart';
 import 'hero_creation_screen.dart';
 import 'hero_details_screen.dart';
 
-class HeroesListPage extends ConsumerWidget {
+class HeroesListPage extends ConsumerStatefulWidget {
   const HeroesListPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HeroesListPage> createState() => _HeroesListPageState();
+}
+
+class _HeroesListPageState extends ConsumerState<HeroesListPage> {
+  bool _isCreatingDemoHero = false;
+
+  Future<void> _createDemoHero() async {
+    if (_isCreatingDemoHero) return;
+    setState(() => _isCreatingDemoHero = true);
+
+    try {
+      final demoHero = await ref.read(demoHeroServiceProvider).createDemoHero();
+      await ref.read(heroesProvider.notifier).addHero(demoHero);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nova is ready for gameplay.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not create the demo hero: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isCreatingDemoHero = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final heroesAsyncValue = ref.watch(heroesProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Heroes'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          if (kDebugMode)
+            IconButton(
+              key: const Key('create-demo-hero-button'),
+              onPressed: _isCreatingDemoHero ? null : _createDemoHero,
+              tooltip: 'Create Demo Hero',
+              icon: _isCreatingDemoHero
+                  ? const SizedBox.square(
+                      dimension: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.science_outlined),
+            ),
+        ],
       ),
       body: heroesAsyncValue.when(
         data: (heroes) {
@@ -48,7 +93,7 @@ class HeroesListPage extends ConsumerWidget {
                         File(hero.spriteSheetPath),
                         fit: BoxFit.cover,
                         alignment: Alignment.centerLeft, // Show the first frame
-                        filterQuality: FilterQuality.none, // Keep it pixelated in the thumbnail!
+                        filterQuality: FilterQuality.medium,
                       ),
                     ),
                   ),
@@ -56,7 +101,9 @@ class HeroesListPage extends ConsumerWidget {
                     hero.name,
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  subtitle: Text('Created: ${hero.createdAt.toLocal().toString().split('.')[0]}'),
+                  subtitle: Text(
+                    'Created: ${hero.createdAt.toLocal().toString().split('.')[0]}',
+                  ),
                   onTap: () {
                     Navigator.push(
                       context,

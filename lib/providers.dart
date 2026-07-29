@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'services/hero_repository.dart';
 import 'services/sqlite_hero_repository.dart';
+import 'services/demo_hero_service.dart';
 import 'models/hero_character.dart';
 
 // Provider for the repository
@@ -8,10 +9,15 @@ final heroRepositoryProvider = Provider<HeroRepository>((ref) {
   return SqliteHeroRepository(); // Later can be swapped with Firebase
 });
 
-// AsyncNotifier provider for the list of heroes
-final heroesProvider = AsyncNotifierProvider<HeroesNotifier, List<HeroCharacter>>(() {
-  return HeroesNotifier();
+final demoHeroServiceProvider = Provider<DemoHeroService>((ref) {
+  return DemoHeroService();
 });
+
+// AsyncNotifier provider for the list of heroes
+final heroesProvider =
+    AsyncNotifierProvider<HeroesNotifier, List<HeroCharacter>>(() {
+      return HeroesNotifier();
+    });
 
 class HeroesNotifier extends AsyncNotifier<List<HeroCharacter>> {
   @override

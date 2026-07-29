@@ -18,12 +18,8 @@ void main() {
 
   Widget createWidgetUnderTest() {
     return ProviderScope(
-      overrides: [
-        heroRepositoryProvider.overrideWithValue(mockRepo),
-      ],
-      child: const MaterialApp(
-        home: HeroesListPage(),
-      ),
+      overrides: [heroRepositoryProvider.overrideWithValue(mockRepo)],
+      child: const MaterialApp(home: HeroesListPage()),
     );
   }
 
@@ -37,12 +33,14 @@ void main() {
     await tester.pumpWidget(createWidgetUnderTest());
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    
+
     // Clear the pending timer
     await tester.pump(const Duration(seconds: 1));
   });
 
-  testWidgets('shows empty state message when no heroes provided', (WidgetTester tester) async {
+  testWidgets('shows empty state message when no heroes provided', (
+    WidgetTester tester,
+  ) async {
     when(() => mockRepo.getAllHeroes()).thenAnswer((_) async => []);
 
     await tester.pumpWidget(createWidgetUnderTest());
@@ -50,12 +48,23 @@ void main() {
 
     expect(find.textContaining('No heroes yet'), findsOneWidget);
     expect(find.byType(FloatingActionButton), findsOneWidget);
+    expect(find.byKey(const Key('create-demo-hero-button')), findsOneWidget);
   });
 
   testWidgets('displays list of heroes', (WidgetTester tester) async {
     final heroes = [
-      HeroCharacter(id: '1', name: 'Alpha Hero', spriteSheetPath: 'path1', createdAt: DateTime.now()),
-      HeroCharacter(id: '2', name: 'Beta Hero', spriteSheetPath: 'path2', createdAt: DateTime.now()),
+      HeroCharacter(
+        id: '1',
+        name: 'Alpha Hero',
+        spriteSheetPath: 'path1',
+        createdAt: DateTime.now(),
+      ),
+      HeroCharacter(
+        id: '2',
+        name: 'Beta Hero',
+        spriteSheetPath: 'path2',
+        createdAt: DateTime.now(),
+      ),
     ];
     when(() => mockRepo.getAllHeroes()).thenAnswer((_) async => heroes);
 

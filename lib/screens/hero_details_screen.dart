@@ -17,7 +17,7 @@ class HeroDetailsScreen extends StatefulWidget {
 class _HeroDetailsScreenState extends State<HeroDetailsScreen> {
   int _currentFrame = 0;
   Timer? _animationTimer;
-  static const double _spriteSize = 64.0; 
+  static const double _spriteSize = 64.0;
   AnimationState _currentState = AnimationState.idle;
   int _frameIndex = 0;
 
@@ -82,10 +82,14 @@ class _HeroDetailsScreenState extends State<HeroDetailsScreen> {
           children: [
             Text(
               "${_currentState.name.toUpperCase()} ANIMATION",
-              style: const TextStyle(color: Colors.white70, fontSize: 18, letterSpacing: 2),
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 18,
+                letterSpacing: 2,
+              ),
             ),
             const SizedBox(height: 20),
-            
+
             // Loop player
             Container(
               width: 256,
@@ -95,44 +99,49 @@ class _HeroDetailsScreenState extends State<HeroDetailsScreen> {
                 border: Border.all(color: Colors.deepPurpleAccent, width: 4),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: const [
-                  BoxShadow(color: Colors.deepPurpleAccent, blurRadius: 20, spreadRadius: 2)
+                  BoxShadow(
+                    color: Colors.deepPurpleAccent,
+                    blurRadius: 20,
+                    spreadRadius: 2,
+                  ),
                 ],
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: SizedBox(
-                   width: 256,
-                   height: 256,
-                   child: FittedBox(
-                     fit: BoxFit.fill,
-                     child: SizedBox(
-                       width: _spriteSize,
-                       height: _spriteSize,
-                       child: Stack(
-                         children: [
-                           Positioned(
-                             // Shift the sprite sheet left based on current frame to show only 64x64 at a time
-                             left: -(_currentFrame * _spriteSize), 
-                             top: 0,
-                             child: Image.file(
-                               File(widget.hero.spriteSheetPath),
-                               // CRITICAL: FilterQuality.none enforces hard pixel edges when scaling up
-                               filterQuality: FilterQuality.none, 
-                               width: _spriteSize * 5, // We now support up to 5 frames
-                               height: _spriteSize,
-                               fit: BoxFit.fill,
-                             ),
-                           ),
-                         ],
-                       ),
-                     ),
-                   ),
+                  width: 256,
+                  height: 256,
+                  child: FittedBox(
+                    fit: BoxFit.fill,
+                    child: SizedBox(
+                      width: _spriteSize,
+                      height: _spriteSize,
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            // Shift the sprite sheet left based on current frame to show only 64x64 at a time
+                            left: -(_currentFrame * _spriteSize),
+                            top: 0,
+                            child: Image.file(
+                              File(widget.hero.spriteSheetPath),
+                              filterQuality: FilterQuality.medium,
+                              width:
+                                  _spriteSize *
+                                  5, // We now support up to 5 frames
+                              height: _spriteSize,
+                              fit: BoxFit.fill,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
 
             const SizedBox(height: 20),
-            
+
             // State selectors
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -152,14 +161,14 @@ class _HeroDetailsScreenState extends State<HeroDetailsScreen> {
               style: TextStyle(color: Colors.white54, fontSize: 14),
             ),
             const SizedBox(height: 10),
-            
+
             // Whole sprite sheet
             Container(
               padding: const EdgeInsets.all(8),
               color: Colors.black54,
               child: Image.file(
                 File(widget.hero.spriteSheetPath),
-                filterQuality: FilterQuality.none,
+                filterQuality: FilterQuality.medium,
                 width: 320, // Scaled for 5 frames (64 * 5)
                 height: 64,
                 fit: BoxFit.contain,
