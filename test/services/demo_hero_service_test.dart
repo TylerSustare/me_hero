@@ -15,6 +15,7 @@ void main() {
 
     final createdAt = DateTime.utc(2026, 7, 27, 12);
     late List<String> receivedFramePaths;
+    String? evictedImagePath;
     final service = DemoHeroService(
       temporaryDirectoryProvider: () async => temporaryRoot,
       clock: () => createdAt,
@@ -28,6 +29,9 @@ void main() {
           expect(decoded!.numChannels, 4);
         }
         return '/documents/hero_demo-hero.png';
+      },
+      imageCacheEvictor: (imagePath) async {
+        evictedImagePath = imagePath;
       },
     );
 
@@ -44,6 +48,7 @@ void main() {
     expect(hero.name, 'Nova');
     expect(hero.spriteSheetPath, '/documents/hero_demo-hero.png');
     expect(hero.createdAt, createdAt);
+    expect(evictedImagePath, hero.spriteSheetPath);
     expect(
       temporaryRoot.listSync(),
       isEmpty,

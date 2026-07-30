@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/painting.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
@@ -11,6 +12,7 @@ typedef SpriteSheetGenerator =
     Future<String?> Function(String heroId, List<String> framePaths);
 typedef DirectoryProvider = Future<Directory> Function();
 typedef Clock = DateTime Function();
+typedef ImageCacheEvictor = Future<void> Function(String imagePath);
 
 /// Builds the debug hero through the same sprite-sheet pipeline as a
 /// camera-created hero, using bundled pose frames instead of photos.
@@ -19,12 +21,14 @@ class DemoHeroService {
     AssetBundle? assetBundle,
     DirectoryProvider? temporaryDirectoryProvider,
     SpriteSheetGenerator? spriteSheetGenerator,
+    ImageCacheEvictor? imageCacheEvictor,
     Clock? clock,
   }) : _assetBundle = assetBundle ?? rootBundle,
        _temporaryDirectoryProvider =
            temporaryDirectoryProvider ?? getTemporaryDirectory,
        _spriteSheetGenerator =
            spriteSheetGenerator ?? SpriteProcessor.generateHeroSpriteSheet,
+       _imageCacheEvictor = imageCacheEvictor ?? _evictFileImage,
        _clock = clock ?? DateTime.now;
 
   static const heroId = 'demo-hero';
@@ -40,7 +44,12 @@ class DemoHeroService {
   final AssetBundle _assetBundle;
   final DirectoryProvider _temporaryDirectoryProvider;
   final SpriteSheetGenerator _spriteSheetGenerator;
+  final ImageCacheEvictor _imageCacheEvictor;
   final Clock _clock;
+
+  static Future<void> _evictFileImage(String imagePath) async {
+    await FileImage(File(imagePath)).evict();
+  }
 
   Future<HeroCharacter> createDemoHero() async {
     final createdAt = _clock();
@@ -72,6 +81,10 @@ class DemoHeroService {
       if (spriteSheetPath == null) {
         throw StateError('The demo hero sprite sheet could not be created.');
       }
+
+      // The demo always overwrites the same sprite-sheet path. Evict its old
+      // decoded image so recreating Nova immediately displays updated frames.
+      await _imageCacheEvictor(spriteSheetPath);
 
       return HeroCharacter(
         id: heroId,
