@@ -41,6 +41,9 @@ dependencies:
   image: ^4.8.0
   path: ^1.9.1
   google_mlkit_selfie_segmentation: ^0.10.1
+  flame: ^1.38.0
+  flame_tiled: ^3.1.2
+  firebase_core: ^4.13.0
 
 dev_dependencies:
   flutter_test:
